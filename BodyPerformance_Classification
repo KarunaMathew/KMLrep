@@ -1,0 +1,420 @@
+import pandas as pd # used for handling the dataset
+import matplotlib.pyplot as plt
+import numpy as np # used for handling numbers
+import seaborn as sns
+from sklearn.model_selection import train_test_split # used for splitting training and test data
+from sklearn.preprocessing import StandardScaler # used for feature scaling
+from sklearn.metrics import classification_report
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score ,precision_score,recall_score,f1_score
+from sklearn.naive_bayes import GaussianNB
+import time
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.svm import SVC
+#import os, math
+#import xgboost as xgb
+#from collections import Counter
+from xgboost import XGBClassifier
+from lightgbm import LGBMClassifier
+from sklearn.linear_model import Perceptron
+
+
+df = pd.read_csv(r"C:\Users\karun\anaconda3\Lib\site-packages\pandas\io\bodyPerformance.csv")
+df
+
+df.isnull().sum() # checking null values, there is no null values in this data
+df.nunique()
+df.head() # first 5 rows
+
+df.info() #return some information about each column as DataType and Number of Entries
+
+df.describe()
+# data discription
+
+df.keys() # column names
+
+df.dtypes
+
+df = df.rename(columns={'age': 'Age', 'gender': 'Gender', 'height_cm':'height', 'weight_kg':'weight',
+                        'body fat_%':'body_fat', 'sit and bend forward_cm':'sit_bend_forward',
+                        'sit-ups counts':'sit_ups', 'broad jump_cm':'broad_jump',
+                        'class':'Class'})
+df # renamed data
+
+print('Categories: ', np.unique(df['Class'])) # different classes
+plt.hist(df['Class'], bins=10)
+plt.show()  # histogram- each class
+
+
+#Histogram of all data's feature Distribution
+df.hist(bins=100 , figsize=(14,16))
+plt.show()
+
+# EXPLAINIUNG DATA
+#Height Distribution
+sns.histplot(data = df,x = 'height')
+
+#Weight Distribution
+sns.histplot(data = df,x = 'weight',kde=True)
+
+#Gender Distribution
+round(df['Gender'].value_counts()/df.shape[0]*100,2).plot.pie(autopct = '%1.1f%%')
+
+#Class Distribution w.r.t gender
+sns.countplot(x = df['Gender'], data = df, hue = df['Class'])
+
+#Classes Distribution
+round(df['Class'].value_counts()/df.shape[0]*100,2).plot.pie(autopct = '%1.1f%%')
+
+#Age Distribution
+sns.histplot(data = df,x = 'Age')
+
+
+df['Gender'].value_counts()
+
+df['Class'].value_counts()
+
+# Label Encoding to (gender, class) columns
+df['Gender'].replace(['F','M'],[0,1],inplace=True)
+df['Class'].replace(['A','B','C','D'],[1,2,3,4],inplace=True)
+df
+
+df['sit_bend_forward'].abs() # taking absolute value of sit and bend forward
+df
+
+df.duplicated()
+
+df['Age'].nunique()
+
+# Correlation Matrix for the data
+plt.figure(figsize=(8,6),dpi = 150)
+sns.heatmap(df.corr(),annot = True , cmap = 'ocean')
+
+corrmat=df.corr()
+print(corrmat)
+# Conclusions from crr matrix:
+# 1. there is high relation between the Height and BroadJump this indicates that More Height is strongly related to higher BroadJump.
+# 2. there is high relation between the Height and GripForce this indicates that More Height is strongly related to more GripForce.
+# 3. there is high relation between the Height and Weight this indicates that More Height is strongly related to more Weight.
+# 4. there is high relation between the Weight and GripForce this indicates that More Weight is strongly related to more GripForce.
+# 5. there is relation between Systolic and Diastolic.
+# 6. there is high relation between the GripForce and BroadJump this indicates that More GripForce is strongly related to higher BroadJump.
+# 7. there is high relation between the Sit-ups counts and BroadJump this indicates that More Sit-ups counts is strongly related to higher BroadJump.
+
+df.plot.density(figsize = (15, 10),linewidth = 3)
+#Density of all features
+
+# Detecting outliers
+plt.figure(figsize=(15,10))
+df.boxplot(vert=0)
+
+
+
+#from sklearn.preprocessing import OneHotEncoder
+#from sklearn.compose import ColumnTransformer
+# features = ["Gender","Class"]
+# one_hot = OneHotEncoder()
+# encoder = ColumnTransformer([("one_hot", one_hot, features)],
+#     remainder="passthrough")
+# encoded_df = encoder.fit_transform(df)
+# encoded_df
+
+# train and test data
+X = df.iloc[:, :-1].values
+Y = df.iloc[:, -1].values
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y,test_size=0.2,random_state=0, stratify=Y)
+
+
+
+stdsc = StandardScaler()
+X_train = stdsc.fit_transform(X_train)
+X_test = stdsc.fit_transform(X_test)
+ 
+# 1. naive bayes:gausian
+start = time.time()
+
+gaussian = GaussianNB()
+gaussian.fit(X_train, Y_train)
+Y_pred = gaussian.predict(X_test)
+#print(classification_report(Y_test, Y_pred))
+print(classification_report(Y_test, Y_pred)) 
+accuracy_nb=round(accuracy_score(Y_test,Y_pred)* 100, 2)
+acc_gaussian = round(gaussian.score(X_train, Y_train) * 100, 2)
+cm = confusion_matrix(Y_test, Y_pred)
+nb_score_train = gaussian.score(X_train, Y_train)
+print('nb_score_train',nb_score_train)
+accuracy = accuracy_score(Y_test,Y_pred)
+precision =precision_score(Y_test, Y_pred,average='micro')
+recall =  recall_score(Y_test, Y_pred,average='micro')
+f1 = f1_score(Y_test,Y_pred,average='micro')
+print('Confusion matrix for Naive Bayes\n',cm)
+print('accuracy_Naive Bayes: %.3f' %accuracy)
+print('precision_Naive Bayes: %.3f' %precision)
+print('recall_Naive Bayes: %.3f' %recall)
+print('f1-score_Naive Bayes : %.3f' %f1)
+
+Y_predict = gaussian.fit(X_train, Y_train).predict(X_test)
+target_names = ['Class A', 'Class B', 'Class C', 'Class D']
+print(classification_report(Y_test, Y_predict, target_names = target_names))
+
+
+end = time.time()
+print("Naive Bayes time",end - start, "seconds")
+
+sns.heatmap(cm, annot=True,cmap="mako_r")
+
+
+# 2. KNN Model
+start = time.time()
+
+
+kclf = KNeighborsClassifier(n_neighbors=6 )
+kclf.fit(X_train, Y_train)
+KNeighborsClassifier(n_neighbors=6)
+kclf_score_train = kclf.score(X_train,Y_train)
+kclf_score_test = kclf.score(X_test,Y_test)
+print('kclf_score_train',kclf_score_train)
+print('kclf_score_test',kclf_score_test)
+
+Y_predict = kclf.fit(X_train, Y_train).predict(X_test)
+target_names = ['Class A', 'Class B', 'Class C', 'Class D']
+print(classification_report(Y_test, Y_predict, target_names = target_names))
+
+
+end = time.time()
+print("KNN time",end - start, "seconds")
+
+cm = pd.DataFrame(confusion_matrix(Y_test, Y_predict))
+sns.heatmap(cm, annot=True,cmap="mako_r")
+
+
+# 3. Logistic Regression Model
+start = time.time()
+
+lr = LogisticRegression()
+lr.fit(X_train,Y_train)
+LogisticRegression()
+lr_score_train = lr.score(X_train,Y_train)
+lr_score_test = lr.score(X_test,Y_test)
+print('lr_score_train',lr_score_train)
+print('lr_score_test',lr_score_test)
+
+Y_predict = lr.fit(X_train, Y_train).predict(X_test)
+target_names = ['Class A', 'Class B', 'Class C', 'Class D']
+print(classification_report(Y_test, Y_predict, target_names = target_names))
+
+end = time.time()
+print("Logistic Regression time",end - start, "seconds")
+
+cm = pd.DataFrame(confusion_matrix(Y_test, Y_predict))
+sns.heatmap(cm, annot=True,cmap="mako_r")
+
+
+# 4. Random Forest Model
+start = time.time()
+
+rf = RandomForestClassifier()
+rf.fit(X_train,Y_train)
+RandomForestClassifier()
+rf_score_train = rf.score(X_train,Y_train)
+rf_score_test = rf.score(X_test,Y_test)
+print('rf_score_train',rf_score_train)
+print('rf_score_test',rf_score_test)
+
+Y_predict = rf.fit(X_train, Y_train).predict(X_test)
+target_names = ['Class A', 'Class B', 'Class C', 'Class D']
+print(classification_report(Y_test, Y_predict, target_names = target_names))
+
+end = time.time()
+print("Random Forest time",end - start, "seconds")
+
+cm = pd.DataFrame(confusion_matrix(Y_test, Y_predict))
+sns.heatmap(cm, annot=True,cmap="mako_r")
+
+# 5. Decision Tree
+start = time.time()
+
+dt = DecisionTreeClassifier()
+dt.fit(X_train,Y_train)
+DecisionTreeClassifier()
+dt_score_train = dt.score(X_train,Y_train)
+dt_score_test = dt.score(X_test,Y_test)
+print('dt_score_train',dt_score_train)
+print('dt_score_test',dt_score_test)
+Y_predict = dt.fit(X_train, Y_train).predict(X_test)
+target_names = ['Class A', 'Class B', 'Class C', 'Class D']
+print(classification_report(Y_test, Y_predict, target_names = target_names))
+
+end = time.time()
+print("Decision Tree Time",end - start, "seconds")
+
+cm = pd.DataFrame(confusion_matrix(Y_test, Y_predict))
+sns.heatmap(cm, annot=True,cmap="mako_r")
+
+
+
+# 6. SVM classifier
+
+start = time.time()
+svm=SVC(gamma=1e-4 ,C=500,random_state=42)
+svm.fit(X_train,Y_train)
+svm_score_train = svm.score(X_train,Y_train)
+svm_score_test = svm.score(X_test,Y_test)
+print(svm_score_train)
+print(svm_score_test)
+print(f"train score: {svm.score(X_train,Y_train):.4f}")
+print(f"test score: {svm.score(X_test,Y_test):.4f}")
+
+Y_predict = svm.fit(X_train, Y_train).predict(X_test)
+target_names = ['Class A', 'Class B', 'Class C', 'Class D']
+print(classification_report(Y_test, Y_predict, target_names = target_names))
+end = time.time()
+print("SVC time",end - start, "seconds")
+
+sns.heatmap(confusion_matrix(Y_test,svm.predict(X_test)),annot=True,annot_kws={"size":10},cmap='twilight',fmt='.0f')
+
+
+# 7. XGBoost classifier
+
+start = time.time()
+xgbc=XGBClassifier(n_estimators=500, learning_rate=0.05)
+xgbc.fit(X_train,Y_train, early_stopping_rounds=5, eval_set=[(X_test,Y_test)],verbose=False)
+xgbc_score_train = xgbc.score(X_train,Y_train)
+xgbc_score_test = xgbc.score(X_test,Y_test)
+print(xgbc_score_test)
+print(xgbc_score_train)
+print(f"train score: {xgbc.score(X_train,Y_train):.4f}")
+print(f"test score: {xgbc.score(X_test,Y_test):.4f}")
+
+Y_predict = xgbc.fit(X_train, Y_train).predict(X_test)
+target_names = ['Class A', 'Class B', 'Class C', 'Class D']
+print(classification_report(Y_test, Y_predict, target_names = target_names))
+
+end = time.time()
+print("XGBC time",end - start, "seconds")
+
+sns.heatmap(confusion_matrix(Y_test,xgbc.predict(X_test)),annot=True,annot_kws={"size":10},cmap='twilight',fmt='.0f')
+
+
+
+# 8. LightGBM classifier
+start = time.time()
+
+lgbm=LGBMClassifier(learning_rate=.005,n_estimators=500)
+lgbm.fit(X_train,Y_train, early_stopping_rounds=5, eval_set=[(X_test,Y_test)],verbose=False)
+lgbm_score_train = lgbm.score(X_train,Y_train)
+lgbm_score_test = lgbm.score(X_test,Y_test)
+print(lgbm_score_train)
+print(lgbm_score_test)
+print(f"train score: {lgbm.score(X_train,Y_train):.4f}")
+print(f"test score: {lgbm.score(X_test,Y_test):.4f}")
+
+Y_predict = lgbm.fit(X_train, Y_train).predict(X_test)
+target_names = ['Class A', 'Class B', 'Class C', 'Class D']
+print(classification_report(Y_test, Y_predict, target_names = target_names))
+
+end = time.time()
+print("LGBMC time",end - start, "seconds")
+
+sns.heatmap(confusion_matrix(Y_test,lgbm.predict(X_test)),annot=True,annot_kws={"size":10},cmap='twilight',fmt='.0f')
+
+
+###############################################################################
+
+lr = LogisticRegression(C=100, random_state=0, max_iter=1000)
+lr.fit(X_train, Y_train)
+print(sum(lr.predict(X_test) != Y_test))
+
+
+tree = DecisionTreeClassifier(criterion='gini',max_depth=4,random_state=1)
+tree.fit(X_train, Y_train)
+print(sum(tree.predict(X_test) != Y_test))
+
+
+ppn = Perceptron(eta0=0.07,random_state=0)
+ppn.fit(X_train, Y_train)
+Y_pred = ppn.predict(X_test)
+print((Y_test != Y_pred).sum())
+
+
+feat_labels = df.columns[:-1]
+forest = RandomForestClassifier(n_estimators=500,random_state=1)
+forest.fit(X_train, Y_train)
+print(sum(forest.predict(X_test) != Y_test))
+
+results = lr.predict(X_test), tree.predict(X_test), ppn.predict(X_test), forest.predict(X_test)
+for i in results:
+    x = sum(i != Y_test)
+    print(x)
+
+print("Accuracy:")
+for i in results:
+    Accuracy = sum(i == Y_test) / len(X_test)
+    print(Accuracy)
+    
+###############################################################################
+
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.compose import ColumnTransformer
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+
+
+def preprocess_inputs(df):
+    df = df.copy()
+    df['height'] = df['height']/100
+    
+    y = df['Class']
+    X = df.drop('Class',axis=1)
+    
+    X_train, X_test, y_train, y_test = train_test_split(X, y, train_size = 0.2, shuffle=True, random_state=43)
+    
+    scaler = StandardScaler()
+    scaler.fit(X_train)
+    
+    X_train = pd.DataFrame(scaler.transform(X_train),columns = X_train.columns, index=X_train.index)
+    X_test = pd.DataFrame(scaler.transform(X_test),columns = X_test.columns, index=X_test.index)    
+    
+    return X_train, X_test, y_train, y_test
+
+X_train, X_test, y_train, y_test = preprocess_inputs(df)
+X_train
+
+
+#import tensorflow as tf
+
+#from sklearn.preprocessing import LabelEncoder
+from sklearn.linear_model import LogisticRegression
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.svm import LinearSVC, SVC
+from sklearn.neural_network import MLPClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.ensemble import BaggingClassifier
+from sklearn.naive_bayes import GaussianNB
+
+import warnings
+warnings.filterwarnings('ignore')
+
+models = {
+    '        Logistic Regression' : LogisticRegression(),
+    '              Decision Tree' : DecisionTreeClassifier(),
+    '              Random Forest' : RandomForestClassifier(),
+    '                 K-Neighbors': KNeighborsClassifier(),
+    'Gradient Boosting Classifier': GradientBoostingClassifier(),
+    '                  Linear SVM': LinearSVC(),
+    '                  Kernel SVM': SVC(),  
+    '                 Naive Bayes': GaussianNB(),
+    }
+
+for name, model in models.items():
+    model = model.fit(X_train,y_train)
+    print(name + " trained")
+
+for name, model in models.items():
+    print(name + ": {:.2f}%".format(model.score(X_test, y_test) * 100))
+
