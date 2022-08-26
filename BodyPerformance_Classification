@@ -1,3 +1,4 @@
+IMPORTING LIBRARIES
 import pandas as pd # used for handling the dataset
 import matplotlib.pyplot as plt
 import numpy as np # used for handling numbers
@@ -22,9 +23,14 @@ from lightgbm import LGBMClassifier
 from sklearn.linear_model import Perceptron
 
 
+
+READING THE DATA
 df = pd.read_csv(r"C:\Users\karun\anaconda3\Lib\site-packages\pandas\io\bodyPerformance.csv")
 df
 
+
+
+PRE-PROCESSING THE DATA
 df.isnull().sum() # checking null values, there is no null values in this data
 df.nunique()
 df.head() # first 5 rows
@@ -48,10 +54,11 @@ print('Categories: ', np.unique(df['Class'])) # different classes
 plt.hist(df['Class'], bins=10)
 plt.show()  # histogram- each class
 
-
 #Histogram of all data's feature Distribution
 df.hist(bins=100 , figsize=(14,16))
 plt.show()
+
+
 
 # EXPLAINIUNG DATA
 #Height Distribution
@@ -71,7 +78,6 @@ round(df['Class'].value_counts()/df.shape[0]*100,2).plot.pie(autopct = '%1.1f%%'
 
 #Age Distribution
 sns.histplot(data = df,x = 'Age')
-
 
 df['Gender'].value_counts()
 
@@ -112,27 +118,20 @@ plt.figure(figsize=(15,10))
 df.boxplot(vert=0)
 
 
-
-#from sklearn.preprocessing import OneHotEncoder
-#from sklearn.compose import ColumnTransformer
-# features = ["Gender","Class"]
-# one_hot = OneHotEncoder()
-# encoder = ColumnTransformer([("one_hot", one_hot, features)],
-#     remainder="passthrough")
-# encoded_df = encoder.fit_transform(df)
-# encoded_df
-
+SPLITTING INTO TRAIN AND TEST DATA
 # train and test data
 X = df.iloc[:, :-1].values
 Y = df.iloc[:, -1].values
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y,test_size=0.2,random_state=0, stratify=Y)
 
-
-
+# standardisation
 stdsc = StandardScaler()
 X_train = stdsc.fit_transform(X_train)
 X_test = stdsc.fit_transform(X_test)
- 
+
+
+
+CLASSIFICATIONS
 # 1. naive bayes:gausian
 start = time.time()
 
@@ -155,22 +154,16 @@ print('accuracy_Naive Bayes: %.3f' %accuracy)
 print('precision_Naive Bayes: %.3f' %precision)
 print('recall_Naive Bayes: %.3f' %recall)
 print('f1-score_Naive Bayes : %.3f' %f1)
-
 Y_predict = gaussian.fit(X_train, Y_train).predict(X_test)
 target_names = ['Class A', 'Class B', 'Class C', 'Class D']
 print(classification_report(Y_test, Y_predict, target_names = target_names))
-
-
 end = time.time()
 print("Naive Bayes time",end - start, "seconds")
-
 sns.heatmap(cm, annot=True,cmap="mako_r")
 
 
 # 2. KNN Model
 start = time.time()
-
-
 kclf = KNeighborsClassifier(n_neighbors=6 )
 kclf.fit(X_train, Y_train)
 KNeighborsClassifier(n_neighbors=6)
@@ -178,22 +171,17 @@ kclf_score_train = kclf.score(X_train,Y_train)
 kclf_score_test = kclf.score(X_test,Y_test)
 print('kclf_score_train',kclf_score_train)
 print('kclf_score_test',kclf_score_test)
-
 Y_predict = kclf.fit(X_train, Y_train).predict(X_test)
 target_names = ['Class A', 'Class B', 'Class C', 'Class D']
 print(classification_report(Y_test, Y_predict, target_names = target_names))
-
-
 end = time.time()
 print("KNN time",end - start, "seconds")
-
 cm = pd.DataFrame(confusion_matrix(Y_test, Y_predict))
 sns.heatmap(cm, annot=True,cmap="mako_r")
 
 
 # 3. Logistic Regression Model
 start = time.time()
-
 lr = LogisticRegression()
 lr.fit(X_train,Y_train)
 LogisticRegression()
@@ -201,21 +189,17 @@ lr_score_train = lr.score(X_train,Y_train)
 lr_score_test = lr.score(X_test,Y_test)
 print('lr_score_train',lr_score_train)
 print('lr_score_test',lr_score_test)
-
 Y_predict = lr.fit(X_train, Y_train).predict(X_test)
 target_names = ['Class A', 'Class B', 'Class C', 'Class D']
 print(classification_report(Y_test, Y_predict, target_names = target_names))
-
 end = time.time()
 print("Logistic Regression time",end - start, "seconds")
-
 cm = pd.DataFrame(confusion_matrix(Y_test, Y_predict))
 sns.heatmap(cm, annot=True,cmap="mako_r")
 
 
 # 4. Random Forest Model
 start = time.time()
-
 rf = RandomForestClassifier()
 rf.fit(X_train,Y_train)
 RandomForestClassifier()
@@ -223,20 +207,17 @@ rf_score_train = rf.score(X_train,Y_train)
 rf_score_test = rf.score(X_test,Y_test)
 print('rf_score_train',rf_score_train)
 print('rf_score_test',rf_score_test)
-
 Y_predict = rf.fit(X_train, Y_train).predict(X_test)
 target_names = ['Class A', 'Class B', 'Class C', 'Class D']
 print(classification_report(Y_test, Y_predict, target_names = target_names))
-
 end = time.time()
 print("Random Forest time",end - start, "seconds")
-
 cm = pd.DataFrame(confusion_matrix(Y_test, Y_predict))
 sns.heatmap(cm, annot=True,cmap="mako_r")
 
+
 # 5. Decision Tree
 start = time.time()
-
 dt = DecisionTreeClassifier()
 dt.fit(X_train,Y_train)
 DecisionTreeClassifier()
@@ -247,17 +228,13 @@ print('dt_score_test',dt_score_test)
 Y_predict = dt.fit(X_train, Y_train).predict(X_test)
 target_names = ['Class A', 'Class B', 'Class C', 'Class D']
 print(classification_report(Y_test, Y_predict, target_names = target_names))
-
 end = time.time()
 print("Decision Tree Time",end - start, "seconds")
-
 cm = pd.DataFrame(confusion_matrix(Y_test, Y_predict))
 sns.heatmap(cm, annot=True,cmap="mako_r")
 
 
-
 # 6. SVM classifier
-
 start = time.time()
 svm=SVC(gamma=1e-4 ,C=500,random_state=42)
 svm.fit(X_train,Y_train)
@@ -267,18 +244,15 @@ print(svm_score_train)
 print(svm_score_test)
 print(f"train score: {svm.score(X_train,Y_train):.4f}")
 print(f"test score: {svm.score(X_test,Y_test):.4f}")
-
 Y_predict = svm.fit(X_train, Y_train).predict(X_test)
 target_names = ['Class A', 'Class B', 'Class C', 'Class D']
 print(classification_report(Y_test, Y_predict, target_names = target_names))
 end = time.time()
 print("SVC time",end - start, "seconds")
-
 sns.heatmap(confusion_matrix(Y_test,svm.predict(X_test)),annot=True,annot_kws={"size":10},cmap='twilight',fmt='.0f')
 
 
 # 7. XGBoost classifier
-
 start = time.time()
 xgbc=XGBClassifier(n_estimators=500, learning_rate=0.05)
 xgbc.fit(X_train,Y_train, early_stopping_rounds=5, eval_set=[(X_test,Y_test)],verbose=False)
@@ -288,21 +262,16 @@ print(xgbc_score_test)
 print(xgbc_score_train)
 print(f"train score: {xgbc.score(X_train,Y_train):.4f}")
 print(f"test score: {xgbc.score(X_test,Y_test):.4f}")
-
 Y_predict = xgbc.fit(X_train, Y_train).predict(X_test)
 target_names = ['Class A', 'Class B', 'Class C', 'Class D']
 print(classification_report(Y_test, Y_predict, target_names = target_names))
-
 end = time.time()
 print("XGBC time",end - start, "seconds")
-
 sns.heatmap(confusion_matrix(Y_test,xgbc.predict(X_test)),annot=True,annot_kws={"size":10},cmap='twilight',fmt='.0f')
-
 
 
 # 8. LightGBM classifier
 start = time.time()
-
 lgbm=LGBMClassifier(learning_rate=.005,n_estimators=500)
 lgbm.fit(X_train,Y_train, early_stopping_rounds=5, eval_set=[(X_test,Y_test)],verbose=False)
 lgbm_score_train = lgbm.score(X_train,Y_train)
@@ -311,14 +280,11 @@ print(lgbm_score_train)
 print(lgbm_score_test)
 print(f"train score: {lgbm.score(X_train,Y_train):.4f}")
 print(f"test score: {lgbm.score(X_test,Y_test):.4f}")
-
 Y_predict = lgbm.fit(X_train, Y_train).predict(X_test)
 target_names = ['Class A', 'Class B', 'Class C', 'Class D']
 print(classification_report(Y_test, Y_predict, target_names = target_names))
-
 end = time.time()
 print("LGBMC time",end - start, "seconds")
-
 sns.heatmap(confusion_matrix(Y_test,lgbm.predict(X_test)),annot=True,annot_kws={"size":10},cmap='twilight',fmt='.0f')
 
 
@@ -328,17 +294,15 @@ lr = LogisticRegression(C=100, random_state=0, max_iter=1000)
 lr.fit(X_train, Y_train)
 print(sum(lr.predict(X_test) != Y_test))
 
-
 tree = DecisionTreeClassifier(criterion='gini',max_depth=4,random_state=1)
 tree.fit(X_train, Y_train)
 print(sum(tree.predict(X_test) != Y_test))
 
-
+# Perceptron Classification
 ppn = Perceptron(eta0=0.07,random_state=0)
 ppn.fit(X_train, Y_train)
 Y_pred = ppn.predict(X_test)
 print((Y_test != Y_pred).sum())
-
 
 feat_labels = df.columns[:-1]
 forest = RandomForestClassifier(n_estimators=500,random_state=1)
@@ -362,17 +326,12 @@ from sklearn.compose import ColumnTransformer
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
-
-
 def preprocess_inputs(df):
     df = df.copy()
-    df['height'] = df['height']/100
-    
+    df['height'] = df['height']/100    
     y = df['Class']
-    X = df.drop('Class',axis=1)
-    
+    X = df.drop('Class',axis=1)    
     X_train, X_test, y_train, y_test = train_test_split(X, y, train_size = 0.2, shuffle=True, random_state=43)
-    
     scaler = StandardScaler()
     scaler.fit(X_train)
     
